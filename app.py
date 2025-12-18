@@ -4,15 +4,15 @@ import re
 import google.generativeai as genai
 import os
 
-st.write(f"현재 설치된 버전: {genai.__version__}")
 # 페이지 설정
 st.set_page_config(page_title="생활기록부 AI 점검 도구", page_icon="🏫")
 
 st.title("🏫 생활기록부 AI 점검 도구")
 st.markdown("---")
 st.info("💡 선생님들의 칼퇴를 돕기 위해 만든 도구입니다. 개인정보는 서버에 저장되지 않습니다.")
+st.write(f"시스템 버전 확인: {genai.__version__}")
 
-# 1. 점검 기준 PDF 파일 읽기 (경로 문제 해결됨)
+# 1. 점검 기준 PDF 파일 읽기
 @st.cache_data
 def load_criteria():
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -29,21 +29,21 @@ def load_criteria():
 criteria_text = load_criteria()
 
 if not criteria_text:
-    st.error("⚠️ 'guide.pdf' 파일이 없습니다. 개발자 선생님에게 문의하세요.")
+    st.error("⚠️ 'guide.pdf' 파일이 없습니다. (파일 경로 확인 필요)")
 
-# 2. 사용자 입력 받기 (다시 입력창 생성!)
-api_key = st.text_input("🔑 구글 Gemini API 키를 입력하세요 (비밀번호처럼 가려집니다)", type="password")
+# 2. 사용자 입력 받기 (입력창 부활!)
+api_key = st.text_input("🔑 구글 AI Studio에서 받은 키를 입력하세요", type="password")
 uploaded_file = st.file_uploader("📂 점검할 일람표 PDF를 올려주세요", type="pdf")
 
-# 3. 개인정보 지우기 (마스킹)
+# 3. 개인정보 지우기
 def clean_text(text):
-    text = re.sub(r'\d{6}-\d{7}', '******-*******', text) # 주민번호
+    text = re.sub(r'\d{6}-\d{7}', '******-*******', text)
     return text
 
-# 4. 버튼 누르면 실행
+# 4. 검사 시작
 if st.button("검사 시작하기 🚀"):
     if not api_key:
-        st.warning("API 키를 먼저 입력해주세요!")
+        st.warning("API 키를 입력해주세요!")
     elif not uploaded_file:
         st.warning("PDF 파일을 올려주세요!")
     elif not criteria_text:
@@ -52,7 +52,7 @@ if st.button("검사 시작하기 🚀"):
         st.success("분석을 시작합니다... (잠시만 기다려주세요)")
         
         try:
-            # 입력받은 키로 설정 (최신 모델 사용)
+            # 설정 및 모델 연결 (최신 모델 사용)
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel('gemini-1.5-flash')
             
@@ -60,10 +60,9 @@ if st.button("검사 시작하기 🚀"):
             with pdfplumber.open(uploaded_file) as pdf:
                 raw_text = "".join([page.extract_text() for page in pdf.pages])
             
-            # 개인정보 지우기
+            # 개인정보 지우기 & AI 분석
             safe_text = clean_text(raw_text)
             
-            # AI에게 물어보기
             prompt = f"""
             당신은 꼼꼼한 생활기록부 점검관입니다.
             아래 [점검 기준]을 바탕으로 [학생 기록]을 점검하세요.
@@ -78,7 +77,7 @@ if st.button("검사 시작하기 🚀"):
             
             response = model.generate_content(prompt)
             st.markdown(response.text)
-            st.balloons() # 축하 풍선 효과
+            st.balloons()
             
         except Exception as e:
-            st.error(f"오류가 났어요 ㅠㅠ: {e}")
+            st.error(f"오류가 발생했습니다: {e}")
