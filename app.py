@@ -36,7 +36,7 @@ if not criteria_text:
     st.error("⚠️ 'guide.pdf' 파일이 없습니다. 개발자 선생님에게 문의하세요.")
 
 # 2. 사용자 입력 받기
-api_key = st.text_input("🔑 구글 Gemini API 키를 입력하세요 (비밀번호처럼 가려집니다)", type="password")
+api_key = AIzaSyCKy8Hd3eJK8DmiRxPaqFsjoKErvrkvnNA
 uploaded_file = st.file_uploader("📂 점검할 일람표 PDF를 올려주세요", type="pdf")
 
 # 3. 개인정보 지우기 (마스킹)
@@ -86,6 +86,7 @@ if st.button("검사 시작하기 🚀"):
         except Exception as e:
 
             st.error(f"오류가 났어요 ㅠㅠ: {e}")
+
 
 
 
