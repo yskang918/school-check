@@ -65,7 +65,7 @@ if st.button("검사 시작하기 🚀"):
         # AI에게 물어보기
         try:
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-1.5-flash')
+           model = genai.GenerativeModel('gemini-pro')
             
             prompt = f"""
             당신은 꼼꼼한 생활기록부 점검관입니다.
@@ -86,6 +86,7 @@ if st.button("검사 시작하기 🚀"):
         except Exception as e:
 
             st.error(f"오류가 났어요 ㅠㅠ: {e}")
+
 
 
 
