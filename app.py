@@ -4,10 +4,10 @@ import re
 import google.generativeai as genai
 import os
 
-# 페이지 설정
-st.set_page_config(page_title="생활기록부 AI 점검 도구", page_icon="🏫")
+# 페이지 설정 (이름 변경 완료!)
+st.set_page_config(page_title="일람표 AI 점검 도구", page_icon="🏫")
 
-st.title("🏫 생활기록부 AI 점검 도구")
+st.title("🏫 일람표 AI 점검 도구")
 st.markdown("---")
 st.info("💡 선생님들의 칼퇴를 돕기 위해 만든 도구입니다. 개인정보는 서버에 저장되지 않습니다.")
 
@@ -44,7 +44,6 @@ def clean_text(text):
 
 # 4. 검사 시작
 if st.button("검사 시작하기 🚀"):
-    # 입력된 키 앞뒤의 공백 제거
     api_key = api_key_input.strip()
 
     if not api_key:
@@ -57,23 +56,25 @@ if st.button("검사 시작하기 🚀"):
         st.success("분석을 시작합니다... (잠시만 기다려주세요)")
         
         try:
-            # 설정 및 모델 연결
             genai.configure(api_key=api_key)
-            
-            # [수정 완료] 선생님 키 목록에 있는 최신 모델로 변경!
+            # 선생님 키에 맞는 최신 모델 유지
             model = genai.GenerativeModel('gemini-2.5-flash')
             
-            # PDF 텍스트 추출
             with pdfplumber.open(uploaded_file) as pdf:
                 raw_text = "".join([page.extract_text() for page in pdf.pages])
             
-            # 개인정보 지우기
             safe_text = clean_text(raw_text)
             
+            # [수정] 오류가 없으면 없다고 말하도록 강력하게 지시했습니다.
             prompt = f"""
-            당신은 꼼꼼한 생활기록부 점검관입니다.
+            당신은 꼼꼼한 학교생활기록부 점검관입니다.
             아래 [점검 기준]을 바탕으로 [학생 기록]을 점검하세요.
             오탈자, 금지어, 문맥상 어색한 부분을 찾아 표로 정리해주세요.
+
+            **[중요한 지시사항]**
+            1. 발견된 오류가 있다면 '항목', '오류 내용', '수정 제안'을 포함한 표로 작성하세요.
+            2. **만약 오탈자나 위반 사항이 전혀 없다면, 표를 만들지 말고 "✅ 발견된 오류가 없습니다. 완벽합니다!"라고만 답변하세요.**
+            3. 억지로 오류를 만들어내지 마세요.
 
             [점검 기준]
             {criteria_text}
@@ -84,7 +85,10 @@ if st.button("검사 시작하기 🚀"):
             
             response = model.generate_content(prompt)
             st.markdown(response.text)
-            st.balloons()
+            
+            # 오류가 없을 때만 풍선 날리기 (텍스트에 '없습니다'가 포함되면 축하)
+            if "없습니다" in response.text:
+                st.balloons()
             
         except Exception as e:
             st.error(f"오류가 발생했습니다: {e}")
