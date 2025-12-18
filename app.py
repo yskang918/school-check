@@ -3,7 +3,7 @@ import pdfplumber
 import re
 import google.generativeai as genai
 import os
-
+st.write(f"현재 설치된 버전: {genai.__version__}")
 # 페이지 설정
 st.set_page_config(page_title="생활기록부 AI 점검 도구", page_icon="🏫")
 
@@ -78,6 +78,7 @@ if st.button("검사 시작하기 🚀"):
         except Exception as e:
 
             st.error(f"오류가 났어요 ㅠㅠ: {e}")
+
 
 
 
