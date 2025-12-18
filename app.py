@@ -14,9 +14,17 @@ st.info("💡 선생님들의 칼퇴를 돕기 위해 만든 도구입니다. �
 # 1. 점검 기준 PDF 파일 읽기
 @st.cache_data
 def load_criteria():
-    if os.path.exists("guide.pdf"):
+    # 현재 실행 중인 파일(app.py)의 위치를 알아냅니다.
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # 그 위치와 파일명을 합쳐서 정확한 주소를 만듭니다.
+    file_path = os.path.join(current_dir, "guide.pdf")
+    
+    # 디버깅용: 화면에 어디를 찾고 있는지 몰래 찍어봅니다 (문제 해결 후 삭제 가능)
+    print(f"파일 찾는 위치: {file_path}") 
+
+    if os.path.exists(file_path):
         text = ""
-        with pdfplumber.open("guide.pdf") as pdf:
+        with pdfplumber.open(file_path) as pdf:
             for page in pdf.pages:
                 text += page.extract_text() + "\n"
         return text
@@ -78,6 +86,7 @@ if st.button("검사 시작하기 🚀"):
         except Exception as e:
 
             st.error(f"오류가 났어요 ㅠㅠ: {e}")
+
 
 
 
