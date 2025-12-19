@@ -10,7 +10,7 @@ import io
 # 페이지 설정
 st.set_page_config(page_title="일람표 AI 점검 도구", page_icon="🏫", layout="wide")
 
-st.title("🏫 일람표 AI 점검 도구 (논리 완성판)")
+st.title("🏫 일람표 AI 점검 도구")
 st.markdown("---")
 st.info("💡 **이름 마스킹 기능 탑재!** 이름을 가려도 **'학생 번호'**를 함께 추출하여 누구인지 식별할 수 있습니다.")
 
@@ -200,3 +200,4 @@ if st.button("검사 시작하기 🚀"):
             
         except Exception as e:
             st.error(f"오류가 발생했습니다: {e}")
+
