@@ -29,7 +29,7 @@ except ImportError:
     st.stop()
 
 # 사이드바 없이 넓은 화면 사용
-st.set_page_config(page_title="반편성 프로그램", layout="wide", initial_sidebar_state="collapsed") 
+st.set_page_config(page_title="반편성 프로그램 v10.1", layout="wide", initial_sidebar_state="collapsed") 
 
 # CSS: 디자인 디테일 설정
 st.markdown("""
@@ -123,31 +123,17 @@ st.markdown("""
         margin-right: 1px; vertical-align: middle;
     }
 
+    div[data-testid="stDataEditor"] { zoom: 1.1; }
+    div[data-testid="stDataEditor"] th { font-weight: 800 !important; color: #111 !important; font-size: 13px !important; }
+    div[data-testid="stDataEditor"] td { font-weight: 600 !important; color: #333 !important; font-size: 13px !important;}
+    
     .header-title-text {
         font-size: 24px; font-weight: 700; color: #333; margin-bottom: 0px; line-height: 1.5; white-space: nowrap;
-    }
-    
-    /* 교환 센터 스타일 */
-    .swap-box {
-        background-color: #ffffff;
-        padding: 15px;
-        border-radius: 8px;
-        border: 1px solid #e0e0e0;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-    .swap-info {
-        font-size: 13px;
-        color: #555;
-        background-color: #f8f9fa;
-        padding: 8px;
-        border-radius: 4px;
-        margin-top: 5px;
-        border: 1px solid #eee;
     }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🏫 반편성 프로그램")
+st.title("🏫 반편성 프로그램 (v10.1)")
 
 # --- 2. 상단 컨트롤 패널 ---
 col_set, col_down, col_blank = st.columns([2, 1.5, 6.5])
@@ -313,27 +299,23 @@ if uploaded_files:
             st.session_state['uploaded_file_names'] = curr_files
             st.success(f"✅ {len(df)}명 로드 완료")
 
-# --- 5. [v9.2] 3단계 우선순위 배정 (NameError 수정 버전) ---
+# --- 5. [v9.2] 3단계 우선순위 배정 ---
 def run_assignment(df, class_names):
     df = df.copy()
     conflict_pairs, _, _ = build_conflict_map(df)
     
-    # 반 초기화
     classes = {c: {'students': [], 'score_sum': 0, 'm': 0, 'f': 0, 'conflict_ids': set(), 'reasons': {}} for c in class_names}
     
-    # 충돌 횟수 계산
     conflict_counts = {id: 0 for id in df['Internal_ID']}
     for pair in conflict_pairs:
         for p in pair:
             conflict_counts[p] += 1
     df['conflict_degree'] = df['Internal_ID'].map(conflict_counts)
     
-    # --- 그룹 분리 ---
     transfer_mask = df['is_transfer'] == True
     high_score_mask = (df['곤란도점수'] > 0) & (~transfer_mask)
     regular_mask = (df['곤란도점수'] == 0) & (~transfer_mask)
     
-    # --- 단계별 배정 ---
     group_1 = df[high_score_mask].sort_values(by=['conflict_degree', '곤란도점수', '이름'], ascending=[False, False, True])
     for _, row in group_1.iterrows():
         assign_with_priority(row, classes, conflict_pairs, priority_mode="SCORE_BALANCE", df=df)
@@ -364,7 +346,6 @@ def assign_with_priority(row, classes, conflict_pairs, priority_mode, df):
             my_enemies.update(pair)
             
     class_costs = []
-    
     transfer_ids = set(df[df['is_transfer']].Internal_ID.values)
 
     for c_name, c_info in classes.items():
@@ -425,6 +406,7 @@ if 'assigned_data' in st.session_state:
     conflict_pairs, separation_pairs, _ = build_conflict_map(df)
     current_map = df.set_index('Internal_ID')['배정반'].to_dict()
     
+    # [수정] 성별 순서 변수 안전하게 생성
     df['gender_rank'] = df['성별'].map({'여': 1, '남': 2}).fillna(3)
     df['display_icon'] = ""
     
@@ -599,20 +581,17 @@ if 'assigned_data' in st.session_state:
     if 'swap_source_class' not in st.session_state: st.session_state['swap_source_class'] = target_class_names[0]
     if 'swap_target_class' not in st.session_state: st.session_state['swap_target_class'] = target_class_names[1] if len(target_class_names) > 1 else target_class_names[0]
 
-    # Layout: Left(Source) | Action | Right(Target)
     col_swap_left, col_swap_action, col_swap_right = st.columns([1, 0.2, 1])
 
     with col_swap_left:
         st.markdown("**보내는 반 (Source)**")
         s_cls = st.selectbox("반 선택", target_class_names, key="s_cls_key")
         
-        # Filter students in selected class
         s_students_df = df[df['배정반'] == s_cls].sort_values(['이름'])
         s_student_list = s_students_df['이름'].tolist()
         
         s_std_name = st.selectbox("학생 선택", s_student_list, key="s_std_key") if s_student_list else None
         
-        # Show Info
         if s_std_name:
             s_row = df[(df['배정반'] == s_cls) & (df['이름'] == s_std_name)].iloc[0]
             st.info(f"👤 {s_row['성별']} | 📊 {int(s_row['곤란도점수'])}점 | 📝 {s_row['곤란도']}")
@@ -626,7 +605,6 @@ if 'assigned_data' in st.session_state:
         
         t_std_name = st.selectbox("학생 선택 (교환 대상)", t_student_list, key="t_std_key")
         
-        # Show Info
         if t_std_name and t_std_name != "(선택 안 함 - 이동만 하기)":
             t_row = df[(df['배정반'] == t_cls) & (df['이름'] == t_std_name)].iloc[0]
             st.info(f"👤 {t_row['성별']} | 📊 {int(t_row['곤란도점수'])}점 | 📝 {t_row['곤란도']}")
@@ -634,7 +612,7 @@ if 'assigned_data' in st.session_state:
             st.success("👉 왼쪽 학생을 이 반으로 보냅니다.")
 
     with col_swap_action:
-        st.write("") # Spacer
+        st.write("") 
         st.write("") 
         if st.button("🔄 실행", type="primary", use_container_width=True):
             if s_cls == t_cls:
@@ -642,19 +620,93 @@ if 'assigned_data' in st.session_state:
             elif not s_std_name:
                 st.warning("학생을 선택하세요.")
             else:
-                # Get Internal IDs
                 s_id = df[(df['배정반'] == s_cls) & (df['이름'] == s_std_name)]['Internal_ID'].values[0]
                 
                 if t_std_name and t_std_name != "(선택 안 함 - 이동만 하기)":
-                    # SWAP
                     t_id = df[(df['배정반'] == t_cls) & (df['이름'] == t_std_name)]['Internal_ID'].values[0]
                     st.session_state['assigned_data'].loc[st.session_state['assigned_data']['Internal_ID'] == s_id, '배정반'] = t_cls
                     st.session_state['assigned_data'].loc[st.session_state['assigned_data']['Internal_ID'] == t_id, '배정반'] = s_cls
                     st.toast(f"🔄 {s_std_name} ↔ {t_std_name} 교환 완료!")
                 else:
-                    # MOVE
                     st.session_state['assigned_data'].loc[st.session_state['assigned_data']['Internal_ID'] == s_id, '배정반'] = t_cls
                     st.toast(f"👉 {s_std_name} 이동 완료!")
                 
                 time.sleep(0.5)
                 st.rerun()
+
+    # ==========================================
+    # 3. 이동 작업대 (Moving Workbench)
+    # ==========================================
+    st.divider()
+    
+    col_work_title, col_work_legend = st.columns([1.5, 8.5])
+    with col_work_title:
+        st.subheader("📝 이동 작업대")
+    with col_work_legend:
+         st.markdown("""<div style="margin-top: 8px; font-weight: 600; font-size: 13px; color: #555;">
+        <span style='display:inline-block;'>범례:</span>
+        <span style='background-color:#FFF9C4; color:#F57F17; border:1px solid #FBC02D; padding: 2px 6px; border-radius:4px; margin-left:5px;'>🔸 분리희망학생</span>
+        </div>""", unsafe_allow_html=True)
+    
+    col_f1, col_f2, col_f3, col_f4 = st.columns([1, 1, 1, 1])
+    
+    with col_f1: search_name = st.text_input("🔍 이름 검색")
+    with col_f2: 
+        prev_classes = sorted([str(int(float(x))) for x in df['현재반'].unique() if pd.notna(x) and str(x).strip() != ""])
+        filter_prev_cls = st.multiselect("이전 반", prev_classes)
+    with col_f3: filter_gender = st.multiselect("성별", ["남", "여"])
+    with col_f4: filter_new_cls = st.multiselect("새 학년 반", target_class_names)
+    
+    view_df = df.copy()
+    
+    # [안전장치] 키 오류 방지를 위해 gender_rank 강제 재생성
+    if 'gender_rank' not in view_df.columns:
+        view_df['gender_rank'] = view_df['성별'].map({'여': 1, '남': 2}).fillna(3)
+    
+    # [수정] 벡터화 연산으로 변경 (속도 향상 및 오류 방지)
+    mask_sep = view_df['분리희망학생_이름'].notna() & (view_df['분리희망학생_이름'].astype(str).str.strip() != "")
+    view_df.loc[mask_sep, '이름'] = view_df.loc[mask_sep, '이름'] + " 🔸"
+
+    if search_name: view_df = view_df[view_df['이름'].str.contains(search_name)]
+    if filter_prev_cls: 
+        view_df['temp_prev'] = view_df['현재반'].apply(lambda x: str(int(float(x))) if pd.notna(x) and str(x).strip()!="" else "")
+        view_df = view_df[view_df['temp_prev'].isin(filter_prev_cls)]
+    if filter_gender: view_df = view_df[view_df['성별'].isin(filter_gender)]
+    if filter_new_cls: view_df = view_df[view_df['배정반'].isin(filter_new_cls)]
+    
+    view_df = view_df.sort_values(['배정반', 'gender_rank', 'is_transfer', '이름'])
+    
+    editor_cols = ['현재반', '이름', 'display_icon', '성별', '배정반', '곤란도', '곤란도점수', '분리희망학생_이름', '분리희망학생_반', '비고', 'Internal_ID']
+    
+    edited_df = st.data_editor(
+        view_df[editor_cols],
+        key="main_editor",
+        hide_index=True,
+        column_config={
+            "현재반": st.column_config.NumberColumn("이전 반", width="small", disabled=True, format="%d"),
+            "이름": st.column_config.TextColumn("이름", width="small", disabled=True),
+            "display_icon": st.column_config.TextColumn("분리상태", width="small", disabled=True),
+            "성별": st.column_config.TextColumn("성별", width="small", disabled=True),
+            "배정반": st.column_config.SelectboxColumn("배정반", width="small", options=target_class_names, required=True),
+            "곤란도": st.column_config.TextColumn("곤란도", width="medium", disabled=True),
+            "곤란도점수": st.column_config.NumberColumn("점수", width="small", disabled=True),
+            "분리희망학생_이름": st.column_config.TextColumn("분리학생이름", width="medium", disabled=True),
+            "분리희망학생_반": st.column_config.TextColumn("분리학생이전반", width="small", disabled=True),
+            "비고": st.column_config.TextColumn("비고", width="medium", disabled=True),
+            "Internal_ID": None
+        },
+        use_container_width=True,
+        height=600
+    )
+
+    is_changed = False
+    for idx, row in edited_df.iterrows():
+        s_id = row['Internal_ID']
+        new_val = row['배정반']
+        old_val = df.loc[df['Internal_ID']==s_id, '배정반'].values[0]
+        if new_val != old_val:
+            st.session_state['assigned_data'].loc[st.session_state['assigned_data']['Internal_ID']==s_id, '배정반'] = new_val
+            is_changed = True
+            
+    if is_changed:
+        st.rerun()
