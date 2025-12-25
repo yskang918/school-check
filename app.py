@@ -29,7 +29,7 @@ except ImportError:
     st.stop()
 
 # 사이드바 없이 넓은 화면 사용
-st.set_page_config(page_title="반편성 프로그램 v11.0", layout="wide", initial_sidebar_state="collapsed") 
+st.set_page_config(page_title="반편성 프로그램 v12.0", layout="wide", initial_sidebar_state="collapsed") 
 
 # CSS: 디자인 디테일 설정
 st.markdown("""
@@ -60,7 +60,6 @@ st.markdown("""
         margin: 0; line-height: 1.2; 
         white-space: nowrap;
     }
-    .real-count-tag { font-size: 13px; color: #555; font-weight: 600; margin-left: 2px;}
     .score-text { font-size: 20px; font-weight: 900; color: #E65100; line-height: 1.0; margin: 3px 0; }
     
     /* 인원수 텍스트 */
@@ -123,15 +122,14 @@ st.markdown("""
         margin-right: 1px; vertical-align: middle;
     }
 
-    div[data-testid="stDataEditor"] { zoom: 1.1; }
-    div[data-testid="stDataEditor"] th { font-weight: 800 !important; color: #111 !important; font-size: 13px !important; }
-    div[data-testid="stDataEditor"] td { font-weight: 600 !important; color: #333 !important; font-size: 13px !important;}
-    
-    .header-title-text {
-        font-size: 24px; font-weight: 700; color: #333; margin-bottom: 0px; line-height: 1.5; white-space: nowrap;
-    }
-    
     /* 교환 센터 스타일 */
+    .swap-container {
+        background-color: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
     div[data-testid="stExpander"] {
         border: 1px solid #ddd;
         border-radius: 8px;
@@ -140,7 +138,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🏫 반편성 프로그램 (v11.0)")
+st.title("🏫 반편성 프로그램 (v12.0)")
 
 # --- 2. 상단 컨트롤 패널 ---
 col_set, col_down, col_blank = st.columns([2, 1.5, 6.5])
@@ -452,6 +450,7 @@ if 'assigned_data' in st.session_state:
     # 2. [NEW] 1:1 교환 및 이동 센터
     st.divider()
     st.subheader("🔀 1:1 학생 교환 및 이동 센터")
+    st.markdown("<div class='swap-container'>", unsafe_allow_html=True)
     
     if 'swap_source_class' not in st.session_state: st.session_state['swap_source_class'] = target_class_names[0]
     if 'swap_target_class' not in st.session_state: st.session_state['swap_target_class'] = target_class_names[1] if len(target_class_names) > 1 else target_class_names[0]
@@ -495,6 +494,7 @@ if 'assigned_data' in st.session_state:
                     st.session_state['assigned_data'].loc[st.session_state['assigned_data']['Internal_ID'] == s_id, '배정반'] = t_cls
                     st.toast(f"👉 {s_std_name} 이동 완료!")
                 time.sleep(0.5); st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
 
     # 3. 이동 작업대 (Expander로 숨김 처리)
     st.write("")
